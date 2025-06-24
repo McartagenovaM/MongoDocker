@@ -3,6 +3,8 @@ using System.Text.Json;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
+/*Aplicacion para testear manejo de mongodb en docker  desde .net core*/
+
 Console.WriteLine("🚀 Iniciando aplicación de consola .NET para MongoDB...\n");
 
 try
