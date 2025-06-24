@@ -1,6 +1,4 @@
-﻿// See https://aka.ms/new-console-template for more information
-using System.Text.Json;
-using MongoDB.Bson;
+﻿using MongoDB.Bson;
 using MongoDB.Driver;
 
 /*Aplicación para testear manejo de MongoDB en Docker desde .NET Core*/
@@ -22,15 +20,40 @@ try
 
     var random = new Random();
 
-    Console.WriteLine("\n🔁 Presiona cualquier tecla para insertar un nuevo animal.");
-    Console.WriteLine("⏹ Presiona ESC para salir.\n");
+    Console.WriteLine("⌨️ Ingrese cualquier texto + ENTER para agregar un animal. Escriba 'exit' para salir.\n");
 
-    ConsoleKeyInfo keyInfo;
-    do
+    bool modoInteractivo = Console.IsInputRedirected == false;
+
+    if (modoInteractivo)
     {
-        keyInfo = Console.ReadKey(intercept: true);
+        string? input;
+        do
+        {
+            Console.Write("> ");
+            input = Console.ReadLine()?.Trim();
 
-        if (keyInfo.Key != ConsoleKey.Escape)
+            if (!string.IsNullOrEmpty(input) && input.ToLower() != "exit")
+            {
+                var tipo = animalesGranja[random.Next(animalesGranja.Length)];
+                var estado = estados[random.Next(estados.Length)];
+
+                var nuevoAnimal = new BsonDocument
+                {
+                    { "tipo", tipo },
+                    { "estado", estado }
+                };
+
+                await collection.InsertOneAsync(nuevoAnimal);
+                Console.WriteLine($"✅ Animal insertado: {tipo} ({estado})");
+            }
+
+        } while (input?.ToLower() != "exit");
+    }
+    else
+    {
+        Console.WriteLine("⚠️ Modo consola no interactiva detectado. Insertando 3 animales automáticamente.\n");
+
+        for (int i = 0; i < 3; i++)
         {
             var tipo = animalesGranja[random.Next(animalesGranja.Length)];
             var estado = estados[random.Next(estados.Length)];
@@ -42,10 +65,9 @@ try
             };
 
             await collection.InsertOneAsync(nuevoAnimal);
-            Console.WriteLine($"✅ Animal insertado: {tipo} ({estado})");
+            Console.WriteLine($"✅ Animal insertado automáticamente: {tipo} ({estado})");
         }
-
-    } while (keyInfo.Key != ConsoleKey.Escape);
+    }
 
     Console.WriteLine("\n📋 Recuperando todos los documentos en la colección...\n");
 
