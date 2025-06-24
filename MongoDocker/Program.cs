@@ -3,59 +3,61 @@ using System.Text.Json;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-/*Aplicacion para testear manejo de mongodb en docker  desde .net core*/
+/*Aplicación para testear manejo de MongoDB en Docker desde .NET Core*/
 
 Console.WriteLine("🚀 Iniciando aplicación de consola .NET para MongoDB...\n");
 
 try
 {
     Console.WriteLine("🔌 Conectando a MongoDB...");
-    //var client = new MongoClient("mongodb://miguel:supersecreto@192.168.0.4:27017/?authSource=admin");
     var client = new MongoClient("mongodb://miguel:supersecreto@192.168.0.4:27017/miapp?authSource=admin");
-
 
     Console.WriteLine("✅ Conexión establecida con éxito.");
 
-    Console.WriteLine("📂 Accediendo a la base de datos 'miapp'...");
     var database = client.GetDatabase("miapp");
-
-    Console.WriteLine("📄 Accediendo a la colección 'animals'...");
     var collection = database.GetCollection<BsonDocument>("animals");
 
-    // Listas de animales y sentimientos
     var animalesGranja = new[] { "Chanchito", "Vaca", "Toro", "Caballo", "Oveja", "Cabra", "Gallina", "Gallo", "Pato", "Perro" };
     var estados = new[] { "Feliz", "Enojado", "Triste", "Cansado", "Loco" };
 
     var random = new Random();
 
-    for (int i = 0; i < 3; i++)
+    Console.WriteLine("\n🔁 Presiona cualquier tecla para insertar un nuevo animal.");
+    Console.WriteLine("⏹ Presiona ESC para salir.\n");
+
+    ConsoleKeyInfo keyInfo;
+    do
     {
-        var tipo = animalesGranja[random.Next(animalesGranja.Length)];
-        var estado = estados[random.Next(estados.Length)];
+        keyInfo = Console.ReadKey(intercept: true);
 
-        var nuevoAnimal = new BsonDocument
-    {
-        { "tipo", tipo },
-        { "estado", estado }
-    };
+        if (keyInfo.Key != ConsoleKey.Escape)
+        {
+            var tipo = animalesGranja[random.Next(animalesGranja.Length)];
+            var estado = estados[random.Next(estados.Length)];
 
-        await collection.InsertOneAsync(nuevoAnimal);
-        Console.WriteLine($"✅ Animal insertado: {tipo} ({estado})");
-    }
+            var nuevoAnimal = new BsonDocument
+            {
+                { "tipo", tipo },
+                { "estado", estado }
+            };
 
+            await collection.InsertOneAsync(nuevoAnimal);
+            Console.WriteLine($"✅ Animal insertado: {tipo} ({estado})");
+        }
 
-    Console.WriteLine("✅ Documento insertado correctamente.\n");
+    } while (keyInfo.Key != ConsoleKey.Escape);
 
-    Console.WriteLine("📋 Recuperando todos los documentos en la colección...\n");
+    Console.WriteLine("\n📋 Recuperando todos los documentos en la colección...\n");
+
     var animales = await collection.Find(new BsonDocument()).ToListAsync();
-
     Console.WriteLine($"🐾 Se encontraron {animales.Count} documentos:\n");
+
     foreach (var animal in animales)
     {
         Console.WriteLine(animal.ToJson(new MongoDB.Bson.IO.JsonWriterSettings { Indent = true }));
     }
 
-    Console.WriteLine("\n✅ Operación finalizada con éxito.");
+    Console.WriteLine("\n✅ Aplicación finalizada.");
 }
 catch (Exception ex)
 {
